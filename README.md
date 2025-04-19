@@ -25,6 +25,7 @@ This is a React.js-based Book Library application that allows users to search fo
 
 - `BookContainer` – Main component handling logic and rendering.
 - `BookList` – Displays books, allows saving, deleting, and toggling completion.
+- `BookItem` – Handles each individual 'book' component.
 - `BookFindSection` – Search bar with button.
 - `BookModeSection` – Toggle system modes (custom logic).
 - `StorageService` – Handles local storage `getItem` and `setItem`.
