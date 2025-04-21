@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React from "react";
 import './book.css';
 
 const BookItem = ({
@@ -49,4 +49,4 @@ const BookItem = ({
     );
 };
 
-export default memo(BookItem);
+export default BookItem;
