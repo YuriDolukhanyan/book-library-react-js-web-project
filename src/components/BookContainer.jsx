@@ -16,59 +16,65 @@ export const BookContainer = () => {
     const [displayedBooks, setDisplayedBooks] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [systemMode, setSystemMode] = useState(false);
+    const [apiPage, setApiPage] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const isMounted = useRef(true);
-    const booksPerPage = useRef(5);
+    const [totalResults, setTotalResults] = useState(0);
     const [toastMessage, setToastMessage] = useState("");
+    const booksPerPage = useRef(20);
 
     useEffect(() => {
         const data = getInitialState();
         setBooks(data);
-        setTotalPages(Math.ceil(data.length / booksPerPage.current));
-        return () => {
-            isMounted.current = false;
-        };
     }, []);
 
     useEffect(() => {
         if (!searchQuery) {
             const data = getInitialState();
             setBooks(data);
-            setTotalPages(Math.ceil(data.length / booksPerPage.current));
             setCurrentPage(1);
+            setApiPage(1);
+            setTotalResults(data.length);
             return;
         }
+    
         const debounce = setTimeout(() => {
-            getBooksByTitle(searchQuery.trim())
+            getBooksByTitle(searchQuery.trim(), 1)
                 .then((res) => res.json())
                 .then((res) => {
-                    if (isMounted.current && res.numFound > 0) {
+                    if (res.numFound > 0) {
                         const fetchedBooks = res.docs;
                         setBooks(fetchedBooks);
-                        setTotalPages(Math.ceil(fetchedBooks.length / booksPerPage.current));
+                        setApiPage(1);
+                        setTotalResults(res.numFound);
                         setCurrentPage(1);
                     } else {
                         setBooks([]);
                         setDisplayedBooks([]);
-                        setTotalPages(1);
+                        setTotalResults(0);
                         console.log(`No books found for the query: "${searchQuery}"`);
                     }
                 })
-                .catch((err) => {
-                    if (isMounted.current) {
-                        console.error('Error fetching books:', err);
-                    }
-                });
         }, 1000);
+    
         return () => clearTimeout(debounce);
-    }, [searchQuery]);
+    }, [searchQuery]);    
 
     useEffect(() => {
         const startIndex = (currentPage - 1) * booksPerPage.current;
         const endIndex = startIndex + booksPerPage.current;
-        setDisplayedBooks(books.slice(startIndex, endIndex));
-    }, [books, currentPage]);
+        if (endIndex > books.length && books.length < totalResults) {
+            getBooksByTitle(searchQuery.trim(), apiPage + 1)
+                .then((res) => res.json())
+                .then((res) => {
+                    if (res.docs.length > 0) {
+                        setBooks([...books, ...res.docs]);
+                        setApiPage(prev => prev + 1);
+                    }
+                })
+        } else {
+            setDisplayedBooks(books.slice(startIndex, endIndex));
+        }
+    }, [currentPage, books, totalResults]);    
 
     const searchBook = (query) => {
         setSearchQuery(query);
@@ -126,7 +132,7 @@ export const BookContainer = () => {
                 onBookItemCheckboxClick={markDone}
                 toggleMode={systemMode}
                 currentPage={currentPage}
-                totalPages={totalPages}
+                totalPages={Math.ceil(totalResults / booksPerPage.current)}
                 setCurrentPage={setCurrentPage}
             />
         </div>
