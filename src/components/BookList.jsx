@@ -15,7 +15,7 @@ const BookList = ({
     if (!books.length) {
         return <div>There are no books! Loading...</div>;
     }
-    // console.log(books);
+
     return (
         <ul>
             {books.map((item) => (

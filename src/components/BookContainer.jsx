@@ -5,6 +5,7 @@ import { getBooksByTitle } from "../api/api";
 import { StorageService } from "../services/StorageService";
 import { BOOK_LIST_STORAGE_KEY } from "../constants/storageKeys";
 import BookModeSection from "./BookModeSection";
+import Toast from "./Toast";
 
 const getInitialState = () => {
     return JSON.parse(StorageService.getItem(BOOK_LIST_STORAGE_KEY)) ?? [];
@@ -19,6 +20,7 @@ export const BookContainer = () => {
     const [totalPages, setTotalPages] = useState(1);
     const isMounted = useRef(true);
     const booksPerPage = useRef(5);
+    const [toastMessage, setToastMessage] = useState("");
 
     useEffect(() => {
         const data = getInitialState();
@@ -73,6 +75,10 @@ export const BookContainer = () => {
         setCurrentPage(1);
     };
 
+    const showToast = (message) => {
+        setToastMessage(message);
+    };
+
     const addBook = (id) => {
         const temp = books.find(item => item.key === id);
         if (!temp) return;
@@ -80,13 +86,13 @@ export const BookContainer = () => {
         let existingBooks = getInitialState();
 
         if (existingBooks.some(book => book.key === id)) {
-            alert(`Book with id: '${id}' is already saved.`);
+            showToast(`Book with id: '${id}' is already saved.`);
             return;
         }
 
         existingBooks.push({ ...temp, isLocal: !temp.isLocal });
         StorageService.setItem(BOOK_LIST_STORAGE_KEY, JSON.stringify(existingBooks));
-        alert(`The book "${temp.title}" was added to favorites!`);
+        showToast(`The book "${temp.title}" was added to favorites!`);
     };
 
     const deleteBook = (id) => {
@@ -108,6 +114,9 @@ export const BookContainer = () => {
 
     return (
         <div className="books">
+            {toastMessage && (
+                <Toast message={toastMessage} onClose={() => setToastMessage("")} />
+            )}
             <BookModeSection onToggleModeButtonClick={toggleMode} />
             <BookFindSection onSearchBookButtonClick={searchBook} />
             <BookList
